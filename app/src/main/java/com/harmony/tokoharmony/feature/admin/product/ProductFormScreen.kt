@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,15 +29,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,7 +55,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.harmony.tokoharmony.domain.model.PricingMethod
 import com.harmony.tokoharmony.domain.model.ProductKind
-import com.harmony.tokoharmony.domain.model.QuantityType
+import com.harmony.tokoharmony.ui.theme.EmeraldOnPrimary
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimary
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimaryContainer
+import com.harmony.tokoharmony.ui.theme.SurfaceBackground
+import com.harmony.tokoharmony.ui.theme.SurfaceLow
+import com.harmony.tokoharmony.ui.theme.SurfaceLowest
+import com.harmony.tokoharmony.ui.theme.TextOnSurface
+import com.harmony.tokoharmony.ui.theme.TextOnSurfaceVariant
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,6 +76,15 @@ fun ProductFormScreen(
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
+
+    val defaultTextFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = EmeraldPrimary,
+        cursorColor = EmeraldPrimary,
+        focusedLabelColor = EmeraldPrimary,
+        unfocusedContainerColor = SurfaceLowest,
+        focusedContainerColor = SurfaceLowest
+    )
+    val inputFieldShape = RoundedCornerShape(10.dp)
 
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collectLatest { event ->
@@ -80,13 +100,30 @@ fun ProductFormScreen(
                 showAddCategoryDialog = false
                 newCategoryName = ""
             },
-            title = { Text("Tambah Kategori Baru") },
+            containerColor = SurfaceLowest,
+            shape = RoundedCornerShape(20.dp),
+            title = {
+                Text(
+                    text = "Tambah Kategori Baru",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextOnSurface
+                )
+            },
             text = {
                 OutlinedTextField(
                     value = newCategoryName,
                     onValueChange = { newCategoryName = it },
                     label = { Text("Nama Kategori") },
                     singleLine = true,
+                    shape = inputFieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = EmeraldPrimary,
+                        cursorColor = EmeraldPrimary,
+                        focusedLabelColor = EmeraldPrimary,
+                        unfocusedContainerColor = SurfaceLow,
+                        focusedContainerColor = SurfaceLowest
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -98,9 +135,14 @@ fun ProductFormScreen(
                             showAddCategoryDialog = false
                             newCategoryName = ""
                         }
-                    }
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EmeraldPrimary,
+                        contentColor = EmeraldOnPrimary
+                    )
                 ) {
-                    Text("Simpan")
+                    Text("Simpan", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -108,31 +150,39 @@ fun ProductFormScreen(
                     onClick = {
                         showAddCategoryDialog = false
                         newCategoryName = ""
-                    }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = TextOnSurfaceVariant)
                 ) {
-                    Text("Batal")
+                    Text("Batal", fontWeight = FontWeight.SemiBold)
                 }
             }
         )
     }
 
     Scaffold(
+        containerColor = SurfaceBackground,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         if (uiState.isEditMode) "Edit Data Produk" else "Tambah Produk Baru",
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = TextOnSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Batal"
+                            contentDescription = "Batal",
+                            tint = TextOnSurface
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = SurfaceLowest,
+                    titleContentColor = TextOnSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -147,7 +197,7 @@ fun ProductFormScreen(
             if (uiState.errorMessage != null) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
                         text = uiState.errorMessage!!,
@@ -163,7 +213,7 @@ fun ProductFormScreen(
                 text = "1. Identitas Produk",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = EmeraldPrimary
             )
 
             OutlinedTextField(
@@ -172,7 +222,9 @@ fun ProductFormScreen(
                 label = { Text("Nama Produk *") },
                 placeholder = { Text("Contoh: Indomie Goreng Spesial") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                shape = inputFieldShape,
+                colors = defaultTextFieldColors
             )
 
             OutlinedTextField(
@@ -182,7 +234,9 @@ fun ProductFormScreen(
                 placeholder = { Text("Kosongkan jika produk non-barcode") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = inputFieldShape,
+                colors = defaultTextFieldColors
             )
 
             // Category Dropdown with add button
@@ -204,7 +258,9 @@ fun ProductFormScreen(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(),
+                        shape = inputFieldShape,
+                        colors = defaultTextFieldColors
                     )
                     ExposedDropdownMenu(
                         expanded = categoryDropdownExpanded,
@@ -228,57 +284,73 @@ fun ProductFormScreen(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Tambah Kategori Baru",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = EmeraldPrimary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Section 2: Jenis & Metode Penetapan Harga
             Text(
                 text = "2. Jenis & Penetapan Harga",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = EmeraldPrimary
             )
 
-            Text("Jenis Produk:", style = MaterialTheme.typography.bodyMedium)
+            Text("Jenis Produk:", style = MaterialTheme.typography.bodyMedium, color = TextOnSurface)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = uiState.productKind == ProductKind.PHYSICAL,
                     onClick = { viewModel.onProductKindChange(ProductKind.PHYSICAL) },
-                    label = { Text("Fisik (Stok Toko)") }
+                    label = { Text("Fisik (Stok Toko)") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = EmeraldPrimaryContainer.copy(alpha = 0.15f),
+                        selectedLabelColor = EmeraldPrimary
+                    )
                 )
                 FilterChip(
                     selected = uiState.productKind == ProductKind.DIGITAL,
                     onClick = { viewModel.onProductKindChange(ProductKind.DIGITAL) },
-                    label = { Text("Digital (Pulsa/Token)") }
+                    label = { Text("Digital (Pulsa/Token)") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = EmeraldPrimaryContainer.copy(alpha = 0.15f),
+                        selectedLabelColor = EmeraldPrimary
+                    )
                 )
             }
 
-            Text("Metode Penetapan Harga & Timbangan:", style = MaterialTheme.typography.bodyMedium)
+            Text("Metode Penetapan Harga & Timbangan:", style = MaterialTheme.typography.bodyMedium, color = TextOnSurface)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = uiState.pricingMethod == PricingMethod.PER_UNIT,
                     onClick = { viewModel.onPricingMethodChange(PricingMethod.PER_UNIT) },
-                    label = { Text("Per Unit/Satuan (COUNT)") }
+                    label = { Text("Per Unit/Satuan (COUNT)") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = EmeraldPrimaryContainer.copy(alpha = 0.15f),
+                        selectedLabelColor = EmeraldPrimary
+                    )
                 )
                 FilterChip(
                     selected = uiState.pricingMethod == PricingMethod.PER_KG,
                     onClick = { viewModel.onPricingMethodChange(PricingMethod.PER_KG) },
-                    label = { Text("Per Kg (Timbangan/GRAM)") }
+                    label = { Text("Per Kg (Timbangan/GRAM)") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = EmeraldPrimaryContainer.copy(alpha = 0.15f),
+                        selectedLabelColor = EmeraldPrimary
+                    )
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Section 3: Satuan Jual & Stok
             Text(
                 text = "3. Satuan & Konversi Pembelian",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = EmeraldPrimary
             )
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -288,7 +360,9 @@ fun ProductFormScreen(
                     label = { Text("Satuan Jual *") },
                     placeholder = { Text("pcs / bks / kg") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    shape = inputFieldShape,
+                    colors = defaultTextFieldColors
                 )
                 OutlinedTextField(
                     value = uiState.stockUnit,
@@ -296,7 +370,9 @@ fun ProductFormScreen(
                     label = { Text("Satuan Stok *") },
                     placeholder = { Text("pcs / kg") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    shape = inputFieldShape,
+                    colors = defaultTextFieldColors
                 )
             }
 
@@ -307,7 +383,9 @@ fun ProductFormScreen(
                     label = { Text("Satuan Beli (Opsional)") },
                     placeholder = { Text("Contoh: dus / bal") },
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    shape = inputFieldShape,
+                    colors = defaultTextFieldColors
                 )
                 OutlinedTextField(
                     value = uiState.purchaseConversionFactor,
@@ -316,18 +394,20 @@ fun ProductFormScreen(
                     placeholder = { Text("Contoh: 40") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = inputFieldShape,
+                    colors = defaultTextFieldColors
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Section 4: Harga Master & Batas Stok
             Text(
                 text = "4. Harga Master & Batas Stok",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = EmeraldPrimary
             )
 
             OutlinedTextField(
@@ -338,7 +418,9 @@ fun ProductFormScreen(
                 prefix = { Text("Rp ") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = inputFieldShape,
+                colors = defaultTextFieldColors
             )
 
             OutlinedTextField(
@@ -348,7 +430,9 @@ fun ProductFormScreen(
                 placeholder = { Text("Contoh: 10") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = inputFieldShape,
+                colors = defaultTextFieldColors
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -360,10 +444,14 @@ fun ProductFormScreen(
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = EmeraldPrimary,
+                    contentColor = EmeraldOnPrimary
+                ),
                 enabled = !uiState.isLoading
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
+                    CircularProgressIndicator(color = EmeraldOnPrimary, modifier = Modifier.size(24.dp))
                 } else {
                     Icon(imageVector = Icons.Default.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))

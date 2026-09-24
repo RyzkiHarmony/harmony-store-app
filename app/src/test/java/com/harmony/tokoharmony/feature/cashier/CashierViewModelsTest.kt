@@ -275,4 +275,71 @@ class CashierViewModelsTest {
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.unknownBarcode)
     }
+
+    @Test
+    fun barcodeScannerViewModel_continuousMultiScan_aggregatesCart_andTracksFeedback() = runTest {
+        val prodA = (createProductUseCase(
+            categoryId = "cat-1",
+            name = "Mie Instan Goreng",
+            barcode = "8991001",
+            productKind = ProductKind.PHYSICAL,
+            pricingMethod = PricingMethod.PER_UNIT,
+            quantityType = QuantityType.COUNT,
+            sellingUnit = "pcs",
+            stockUnit = "pcs",
+            currentPrice = 3500L,
+            user = adminUser
+        ) as Result.Success).data
+
+        val prodB = (createProductUseCase(
+            categoryId = "cat-1",
+            name = "Kopi Sachet",
+            barcode = "8991002",
+            productKind = ProductKind.PHYSICAL,
+            pricingMethod = PricingMethod.PER_UNIT,
+            quantityType = QuantityType.COUNT,
+            sellingUnit = "sachet",
+            stockUnit = "sachet",
+            currentPrice = 2000L,
+            user = adminUser
+        ) as Result.Success).data
+
+        val viewModel = BarcodeScannerViewModel(
+            getProductByBarcodeUseCase = getProductByBarcodeUseCase,
+            addProductToDraftCartUseCase = addProductToDraftCartUseCase,
+            getCashierUserUseCase = getCashierUserUseCase
+        )
+
+        // 1. Scan Item A (Mie)
+        viewModel.onBarcodeDetected("8991001")
+        advanceUntilIdle()
+        assertEquals("Mie Instan Goreng", viewModel.uiState.value.lastScannedProductName)
+
+        // 2. Scan Item B (Kopi) without closing scanner
+        viewModel.onBarcodeDetected("8991002")
+        advanceUntilIdle()
+        assertEquals("Kopi Sachet", viewModel.uiState.value.lastScannedProductName)
+
+        // 3. Scan Item A (Mie) again after item B (canProcess is true because barcode changed)
+        viewModel.onBarcodeDetected("8991001")
+        advanceUntilIdle()
+        assertEquals("Mie Instan Goreng", viewModel.uiState.value.lastScannedProductName)
+
+        val cart = getActiveDraftCartUseCase().first()!!
+        // Distinct items/lines in cart: 2 (Mie and Kopi)
+        assertEquals(2, cart.itemCount)
+        assertEquals(2, cart.items.size)
+        // Total aggregated quantity: 2 Mie + 1 Kopi = 3
+        assertEquals(3L, cart.items.sumOf { it.quantity })
+        // 2 * 3500 + 1 * 2000 = 7000 + 2000 = 9000
+        assertEquals(9000L, cart.totalAmount)
+
+        // Mie quantity should be aggregated to 2
+        val mieItem = cart.items.first { it.productId == prodA.productId }
+        assertEquals(2L, mieItem.quantity)
+
+        // Clear feedback test
+        viewModel.clearFeedback()
+        assertNull(viewModel.uiState.value.lastScannedProductName)
+    }
 }

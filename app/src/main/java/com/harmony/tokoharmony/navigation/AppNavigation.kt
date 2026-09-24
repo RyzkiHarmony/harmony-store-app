@@ -51,13 +51,23 @@ fun AppNavigation(
 
         composable(Screen.Cashier.route) {
             val cartViewModel: CashierCartViewModel = hiltViewModel()
+            val scannerViewModel: BarcodeScannerViewModel = hiltViewModel()
             CashierCartScreen(
                 viewModel = cartViewModel,
+                scannerViewModel = scannerViewModel,
                 onNavigateToSearch = {
                     navController.navigate(Screen.CashierSearch.route)
                 },
                 onNavigateToScanner = {
                     navController.navigate(Screen.BarcodeScanner.route)
+                },
+                onNavigateToRegisterProduct = { barcode ->
+                    navController.navigate(
+                        Screen.AdminPinAuth.createRoute(
+                            targetDestination = "register_product",
+                            barcode = barcode
+                        )
+                    )
                 },
                 onNavigateToAdminAuth = {
                     navController.navigate(Screen.AdminPinAuth.createRoute())

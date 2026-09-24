@@ -7,12 +7,14 @@ import com.harmony.tokoharmony.core.common.Result
 import com.harmony.tokoharmony.domain.model.Category
 import com.harmony.tokoharmony.domain.model.PriceHistory
 import com.harmony.tokoharmony.domain.model.Product
+import com.harmony.tokoharmony.domain.model.ProductStockInfo
 import com.harmony.tokoharmony.domain.repository.CategoryRepository
 import com.harmony.tokoharmony.domain.usecase.auth.GetAdminUserUseCase
 import com.harmony.tokoharmony.domain.usecase.price.ChangeProductPriceUseCase
 import com.harmony.tokoharmony.domain.usecase.price.GetPriceHistoryUseCase
 import com.harmony.tokoharmony.domain.usecase.product.ActivateProductUseCase
 import com.harmony.tokoharmony.domain.usecase.product.DeactivateProductUseCase
+import com.harmony.tokoharmony.domain.usecase.product.EvaluateProductStockStatusUseCase
 import com.harmony.tokoharmony.domain.usecase.product.GetProductByIdUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +28,7 @@ import javax.inject.Inject
 data class ProductDetailUiState(
     val product: Product? = null,
     val category: Category? = null,
+    val stockInfo: ProductStockInfo? = null,
     val priceHistories: List<PriceHistory> = emptyList(),
     val isPriceChangeDialogVisible: Boolean = false,
     val isDeactivateDialogVisible: Boolean = false,
@@ -38,6 +41,7 @@ class ProductDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getProductByIdUseCase: GetProductByIdUseCase,
     private val categoryRepository: CategoryRepository,
+    private val evaluateProductStockStatusUseCase: EvaluateProductStockStatusUseCase,
     private val getPriceHistoryUseCase: GetPriceHistoryUseCase,
     private val changeProductPriceUseCase: ChangeProductPriceUseCase,
     private val deactivateProductUseCase: DeactivateProductUseCase,
@@ -61,10 +65,12 @@ class ProductDetailViewModel @Inject constructor(
             val product = getProductByIdUseCase(productId)
             if (product != null) {
                 val category = categoryRepository.getCategoryById(product.categoryId)
+                val stockInfo = evaluateProductStockStatusUseCase.getStockInfo(product)
                 _uiState.update {
                     it.copy(
                         product = product,
                         category = category,
+                        stockInfo = stockInfo,
                         isLoading = false
                     )
                 }

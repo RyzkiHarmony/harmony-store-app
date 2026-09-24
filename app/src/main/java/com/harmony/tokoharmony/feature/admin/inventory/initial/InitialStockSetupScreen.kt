@@ -17,11 +17,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,14 +29,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,13 +46,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.harmony.tokoharmony.domain.model.Product
 import com.harmony.tokoharmony.domain.model.QuantityType
+import com.harmony.tokoharmony.ui.theme.EmeraldOnPrimary
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimary
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimaryContainer
+import com.harmony.tokoharmony.ui.theme.StatusSuccessBg
+import com.harmony.tokoharmony.ui.theme.StatusSuccessText
+import com.harmony.tokoharmony.ui.theme.SurfaceBackground
+import com.harmony.tokoharmony.ui.theme.SurfaceLow
+import com.harmony.tokoharmony.ui.theme.SurfaceLowest
+import com.harmony.tokoharmony.ui.theme.TextOnSurface
+import com.harmony.tokoharmony.ui.theme.TextOnSurfaceVariant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,14 +87,19 @@ fun InitialStockSetupScreen(
     }
 
     Scaffold(
+        containerColor = SurfaceBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Penetapan Stok Awal", fontWeight = FontWeight.Bold) },
+                title = { Text("Penetapan Stok Awal", fontWeight = FontWeight.Bold, color = TextOnSurface) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = TextOnSurface)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = SurfaceLowest,
+                    titleContentColor = TextOnSurface
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -94,13 +110,16 @@ fun InitialStockSetupScreen(
                 .padding(paddingValues)
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = EmeraldPrimary
+                )
             } else if (uiState.products.isEmpty()) {
                 Text(
                     text = "Belum ada produk fisik terdaftar.",
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextOnSurfaceVariant
                 )
             } else {
                 LazyColumn(
@@ -114,7 +133,7 @@ fun InitialStockSetupScreen(
                         Text(
                             text = "Pilih produk untuk menetapkan stok awal fisik:",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = TextOnSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                     }
@@ -148,14 +167,22 @@ fun InitialStockSetupScreen(
 
                 AlertDialog(
                     onDismissRequest = { viewModel.clearSelectedProduct() },
+                    containerColor = SurfaceLowest,
+                    shape = RoundedCornerShape(20.dp),
                     title = {
-                        Text("Stok Awal: ${product.name}", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Stok Awal: ${product.name}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextOnSurface
+                        )
                     },
                     text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text(
-                                "Tentukan saldo awal stok fisik untuk produk ini. Nilai ini hanya dapat ditetapkan satu kali sebagai baseline.",
-                                style = MaterialTheme.typography.bodyMedium
+                                text = "Tentukan saldo awal stok fisik untuk produk ini. Nilai ini hanya dapat ditetapkan satu kali sebagai baseline.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextOnSurfaceVariant
                             )
 
                             OutlinedTextField(
@@ -164,31 +191,46 @@ fun InitialStockSetupScreen(
                                 label = { Text("Jumlah Stok Awal ($unitLabel)") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                                singleLine = true,
+                                shape = RoundedCornerShape(10.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = EmeraldPrimary,
+                                    cursorColor = EmeraldPrimary,
+                                    focusedLabelColor = EmeraldPrimary,
+                                    unfocusedContainerColor = SurfaceLow,
+                                    focusedContainerColor = SurfaceLowest
+                                )
                             )
                         }
                     },
                     confirmButton = {
                         Button(
                             onClick = { viewModel.saveInitialStock() },
-                            enabled = !uiState.isSubmitting && uiState.initialStockInput.isNotBlank()
+                            enabled = !uiState.isSubmitting && uiState.initialStockInput.isNotBlank(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = EmeraldPrimary,
+                                contentColor = EmeraldOnPrimary
+                            )
                         ) {
                             if (uiState.isSubmitting) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(18.dp),
-                                    color = Color.White
+                                    color = EmeraldOnPrimary,
+                                    strokeWidth = 2.dp
                                 )
                             } else {
-                                Text("SIMPAN")
+                                Text("SIMPAN", fontWeight = FontWeight.Bold)
                             }
                         }
                     },
                     dismissButton = {
-                        OutlinedButton(
+                        TextButton(
                             onClick = { viewModel.clearSelectedProduct() },
-                            enabled = !uiState.isSubmitting
+                            enabled = !uiState.isSubmitting,
+                            colors = ButtonDefaults.textButtonColors(contentColor = TextOnSurfaceVariant)
                         ) {
-                            Text("BATAL")
+                            Text("BATAL", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 )
@@ -208,11 +250,9 @@ private fun InitialStockProductItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = !isInitialized, onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isInitialized) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-            else MaterialTheme.colorScheme.surfaceVariant
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
@@ -222,14 +262,14 @@ private fun InitialStockProductItem(
         ) {
             Surface(
                 modifier = Modifier.size(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                color = if (isInitialized) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.primaryContainer
+                shape = RoundedCornerShape(10.dp),
+                color = if (isInitialized) StatusSuccessBg else EmeraldPrimaryContainer.copy(alpha = 0.12f)
             ) {
                 Icon(
                     imageVector = if (isInitialized) Icons.Default.CheckCircle else Icons.Default.Inventory,
                     contentDescription = null,
                     modifier = Modifier.padding(8.dp),
-                    tint = if (isInitialized) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary
+                    tint = if (isInitialized) StatusSuccessText else EmeraldPrimary
                 )
             }
 
@@ -241,41 +281,42 @@ private fun InitialStockProductItem(
                 Text(
                     text = product.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextOnSurface
                 )
                 val unit = if (product.quantityType == QuantityType.GRAM) "gram" else product.stockUnit
                 Text(
                     text = if (isInitialized) "Stok saat ini: $currentStock $unit"
                     else "Belum ada stok awal • Ketuk untuk atur",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isInitialized) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary
+                    color = if (isInitialized) StatusSuccessText else TextOnSurfaceVariant
                 )
             }
 
             if (isInitialized) {
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = Color(0xFFE8F5E9)
+                    shape = RoundedCornerShape(8.dp),
+                    color = StatusSuccessBg
                 ) {
                     Text(
                         text = "TERTETAPKAN",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2E7D32),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        color = StatusSuccessText,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             } else {
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = MaterialTheme.colorScheme.primary
+                    shape = RoundedCornerShape(8.dp),
+                    color = EmeraldPrimaryContainer.copy(alpha = 0.12f)
                 ) {
                     Text(
                         text = "ATUR",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        color = EmeraldPrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
                 }
             }

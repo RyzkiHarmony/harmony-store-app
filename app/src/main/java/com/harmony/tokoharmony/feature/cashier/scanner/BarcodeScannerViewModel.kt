@@ -26,7 +26,8 @@ data class BarcodeScannerUiState(
     val unknownBarcode: String? = null,
     val selectedWeightProduct: Product? = null,
     val feedbackMessage: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val lastScannedProductName: String? = null
 )
 
 sealed interface BarcodeScannerNavigationEvent {
@@ -67,7 +68,13 @@ class BarcodeScannerViewModel @Inject constructor(
                 } else {
                     val user = getCashierUserUseCase()
                     val result = addProductToDraftCartUseCase(product.productId, 1L, user.userId)
-                    _uiState.update { it.copy(isProcessing = false) }
+                    _uiState.update {
+                        it.copy(
+                            isProcessing = false,
+                            lastScannedProductName = if (result is Result.Success) product.name else null,
+                            feedbackMessage = if (result is Result.Success) "Berhasil menambahkan ${product.name}" else null
+                        )
+                    }
                     if (result is Result.Success) {
                         _navEvents.emit(BarcodeScannerNavigationEvent.ProductAdded(product.name))
                     } else if (result is Result.Error) {
@@ -92,6 +99,12 @@ class BarcodeScannerViewModel @Inject constructor(
             val user = getCashierUserUseCase()
             val result = addProductToDraftCartUseCase(product.productId, grams, user.userId)
             if (result is Result.Success) {
+                _uiState.update {
+                    it.copy(
+                        lastScannedProductName = product.name,
+                        feedbackMessage = "Berhasil menambahkan ${product.name}"
+                    )
+                }
                 _navEvents.emit(BarcodeScannerNavigationEvent.ProductAdded(product.name))
             } else if (result is Result.Error) {
                 _uiState.update { it.copy(errorMessage = result.error.message) }
@@ -113,6 +126,10 @@ class BarcodeScannerViewModel @Inject constructor(
         viewModelScope.launch {
             _navEvents.emit(BarcodeScannerNavigationEvent.NavigateToRegisterProduct(barcode))
         }
+    }
+
+    fun clearFeedback() {
+        _uiState.update { it.copy(feedbackMessage = null, lastScannedProductName = null) }
     }
 
     fun clearErrorMessage() {

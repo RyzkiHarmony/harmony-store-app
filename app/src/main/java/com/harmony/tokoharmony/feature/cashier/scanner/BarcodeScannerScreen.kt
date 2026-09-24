@@ -9,27 +9,41 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -48,17 +62,36 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.harmony.tokoharmony.feature.cashier.weight.WeightSelectionDialog
+import com.harmony.tokoharmony.ui.theme.AmberOnTertiaryFixed
+import com.harmony.tokoharmony.ui.theme.AmberTertiary
+import com.harmony.tokoharmony.ui.theme.AmberTertiaryFixed
+import com.harmony.tokoharmony.ui.theme.CoralError
+import com.harmony.tokoharmony.ui.theme.CoralErrorContainer
+import com.harmony.tokoharmony.ui.theme.EmeraldOnPrimary
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimary
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimaryFixed
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimaryFixedDim
+import com.harmony.tokoharmony.ui.theme.OutlineVariant
+import com.harmony.tokoharmony.ui.theme.SurfaceBackground
+import com.harmony.tokoharmony.ui.theme.SurfaceContainer
+import com.harmony.tokoharmony.ui.theme.SurfaceLow
+import com.harmony.tokoharmony.ui.theme.SurfaceLowest
+import com.harmony.tokoharmony.ui.theme.TextOnSurface
+import com.harmony.tokoharmony.ui.theme.TextOnSurfaceVariant
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,7 +147,7 @@ fun BarcodeScannerScreen(
         }
     }
 
-    // Weight selection dialog if scanned product is PER_KG
+    // Weight Selection Dialog if scanned product is weighted
     if (uiState.selectedWeightProduct != null) {
         val product = uiState.selectedWeightProduct!!
         WeightSelectionDialog(
@@ -130,72 +163,118 @@ fun BarcodeScannerScreen(
         )
     }
 
-    // Unknown Barcode Dialog
+    // Stitch Unknown Barcode Modal (381db623b7e94189be28651c8b9f4be2)
     if (uiState.unknownBarcode != null) {
         val barcode = uiState.unknownBarcode!!
         AlertDialog(
             onDismissRequest = { viewModel.dismissUnknownBarcodeDialog() },
+            containerColor = SurfaceLowest,
+            shape = RoundedCornerShape(20.dp),
             icon = {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
+                Surface(
+                    shape = CircleShape,
+                    color = CoralErrorContainer,
+                    modifier = Modifier.size(52.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = CoralError,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
             },
             title = {
                 Text(
-                    text = "Produk Belum Terdaftar",
-                    fontWeight = FontWeight.Bold
+                    text = "Barcode Belum Terdaftar",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextOnSurface,
+                    textAlign = TextAlign.Center
                 )
             },
             text = {
-                Column {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = SurfaceLow,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = barcode,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = EmeraldPrimary,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+
                     Text(
-                        text = "Barcode: $barcode",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Produk dengan barcode ini belum ada di sistem toko. Anda dapat mendaftarkannya sekarang dengan otorisasi Admin.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "Produk belum terdaftar di toko. Ingin daftarkan produk baru?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextOnSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = { viewModel.onRegisterNewProduct() },
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EmeraldPrimary,
+                        contentColor = EmeraldOnPrimary
+                    )
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.AddCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text("Daftarkan Produk Baru", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissUnknownBarcodeDialog() }) {
-                    Text("Tutup")
+                    Text("Abaikan", color = TextOnSurfaceVariant, fontWeight = FontWeight.SemiBold)
                 }
             }
         )
     }
 
     Scaffold(
+        containerColor = Color.Black,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Scan Barcode", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Scan Barcode Produk",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Kembali"
+                            contentDescription = "Kembali ke Kasir",
+                            tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = Color.Black.copy(alpha = 0.6f)
                 )
             )
         }
@@ -274,35 +353,80 @@ fun BarcodeScannerScreen(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Viewfinder Overlay
+                // Laser Scanner Animation
+                val infiniteTransition = rememberInfiniteTransition(label = "scanner")
+                val scanOffset by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 2000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "scanOffset"
+                )
+
+                // Stitch Viewfinder Overlay with Neon Teal Corner Accents
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(32.dp),
+                        .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(280.dp, 180.dp)
-                            .border(
-                                BorderStroke(2.dp, Color.White),
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                    )
+                            .size(280.dp, 160.dp)
+                    ) {
+                        // Corner brackets
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .size(24.dp)
+                                .border(BorderStroke(4.dp, EmeraldPrimaryFixedDim), RoundedCornerShape(topStart = 8.dp))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(24.dp)
+                                .border(BorderStroke(4.dp, EmeraldPrimaryFixedDim), RoundedCornerShape(topEnd = 8.dp))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .size(24.dp)
+                                .border(BorderStroke(4.dp, EmeraldPrimaryFixedDim), RoundedCornerShape(bottomStart = 8.dp))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .size(24.dp)
+                                .border(BorderStroke(4.dp, EmeraldPrimaryFixedDim), RoundedCornerShape(bottomEnd = 8.dp))
+                        )
+
+                        // Animated Glowing Laser Line
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .align(Alignment.TopCenter)
+                                .padding(top = (156 * scanOffset).dp)
+                                .background(EmeraldPrimaryFixed)
+                        )
+                    }
                 }
 
+                // Instruction Bottom Pill
                 Surface(
                     color = Color.Black.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 32.dp)
                 ) {
                     Text(
-                        text = "Arahkan kamera ke barcode produk",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "Arahkan barcode produk ke dalam kotak panduan",
+                        style = MaterialTheme.typography.bodySmall,
                         color = Color.White,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -312,31 +436,36 @@ fun BarcodeScannerScreen(
                         .fillMaxSize()
                         .padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.error
+                        tint = CoralError
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Izin Kamera Diperlukan",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = TextOnSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Aplikasi membutuhkan izin kamera untuk memindai barcode produk.",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextOnSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = EmeraldPrimary,
+                            contentColor = EmeraldOnPrimary
+                        )
                     ) {
                         Text("Berikan Izin Kamera")
                     }

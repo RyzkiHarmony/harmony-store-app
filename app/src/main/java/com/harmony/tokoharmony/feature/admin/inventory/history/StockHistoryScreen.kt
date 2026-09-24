@@ -25,18 +25,31 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.harmony.tokoharmony.domain.model.MovementType
 import com.harmony.tokoharmony.domain.model.QuantityType
 import com.harmony.tokoharmony.domain.model.StockMovement
+import com.harmony.tokoharmony.ui.theme.CoralError
+import com.harmony.tokoharmony.ui.theme.CoralErrorContainer
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimary
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimaryContainer
+import com.harmony.tokoharmony.ui.theme.StatusSuccessBg
+import com.harmony.tokoharmony.ui.theme.StatusSuccessText
+import com.harmony.tokoharmony.ui.theme.StatusWarningBg
+import com.harmony.tokoharmony.ui.theme.StatusWarningText
+import com.harmony.tokoharmony.ui.theme.SurfaceBackground
+import com.harmony.tokoharmony.ui.theme.SurfaceContainerHigh
+import com.harmony.tokoharmony.ui.theme.SurfaceLowest
+import com.harmony.tokoharmony.ui.theme.TextOnSurface
+import com.harmony.tokoharmony.ui.theme.TextOnSurfaceVariant
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -50,14 +63,19 @@ fun StockHistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        containerColor = SurfaceBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Riwayat Mutasi Stok", fontWeight = FontWeight.Bold) },
+                title = { Text("Riwayat Mutasi Stok", fontWeight = FontWeight.Bold, color = TextOnSurface) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = TextOnSurface)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = SurfaceLowest,
+                    titleContentColor = TextOnSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -67,23 +85,26 @@ fun StockHistoryScreen(
                 .padding(paddingValues)
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = EmeraldPrimary
+                )
             } else if (uiState.movements.isEmpty()) {
                 Text(
                     text = "Belum ada riwayat pergerakan stok.",
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextOnSurfaceVariant
                 )
             } else {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
                     items(uiState.movements, key = { it.movementId }) { movement ->
@@ -111,8 +132,8 @@ private fun StockMovementCard(
     unit: String
 ) {
     val isPositive = movement.quantityDelta >= 0
-    val deltaColor = if (isPositive) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
-    val deltaBg = if (isPositive) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.errorContainer
+    val deltaColor = if (isPositive) StatusSuccessText else CoralError
+    val deltaBg = if (isPositive) StatusSuccessBg else CoralErrorContainer.copy(alpha = 0.6f)
     val deltaPrefix = if (isPositive) "+" else ""
 
     val typeLabel = when (movement.movementType) {
@@ -124,18 +145,18 @@ private fun StockMovementCard(
     }
 
     val typeBg = when (movement.movementType) {
-        MovementType.INITIAL_STOCK -> MaterialTheme.colorScheme.primaryContainer
+        MovementType.INITIAL_STOCK -> EmeraldPrimaryContainer.copy(alpha = 0.15f)
         MovementType.STOCK_IN -> MaterialTheme.colorScheme.secondaryContainer
-        MovementType.SALE -> MaterialTheme.colorScheme.surfaceVariant
-        MovementType.SALE_REVERSAL -> Color(0xFFFFF3E0)
+        MovementType.SALE -> SurfaceContainerHigh
+        MovementType.SALE_REVERSAL -> StatusWarningBg
         MovementType.ADJUSTMENT -> MaterialTheme.colorScheme.tertiaryContainer
     }
 
     val typeColor = when (movement.movementType) {
-        MovementType.INITIAL_STOCK -> MaterialTheme.colorScheme.onPrimaryContainer
+        MovementType.INITIAL_STOCK -> EmeraldPrimary
         MovementType.STOCK_IN -> MaterialTheme.colorScheme.onSecondaryContainer
-        MovementType.SALE -> MaterialTheme.colorScheme.onSurfaceVariant
-        MovementType.SALE_REVERSAL -> Color(0xFFE65100)
+        MovementType.SALE -> TextOnSurfaceVariant
+        MovementType.SALE_REVERSAL -> StatusWarningText
         MovementType.ADJUSTMENT -> MaterialTheme.colorScheme.onTertiaryContainer
     }
 
@@ -144,12 +165,13 @@ private fun StockMovementCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -157,7 +179,7 @@ private fun StockMovementCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(6.dp),
                     color = typeBg
                 ) {
                     Text(
@@ -165,14 +187,14 @@ private fun StockMovementCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = typeColor,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                     )
                 }
 
                 Text(
                     text = dateStr,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextOnSurfaceVariant
                 )
             }
 
@@ -185,16 +207,17 @@ private fun StockMovementCard(
                     text = productName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
+                    color = TextOnSurface,
                     modifier = Modifier.weight(1f)
                 )
 
                 Surface(
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = deltaBg
                 ) {
                     Text(
                         text = "$deltaPrefix${movement.quantityDelta} $unit",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = deltaColor,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -206,7 +229,7 @@ private fun StockMovementCard(
                 Text(
                     text = movement.reason,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextOnSurfaceVariant
                 )
             }
         }

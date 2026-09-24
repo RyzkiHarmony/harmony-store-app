@@ -1,5 +1,6 @@
 package com.harmony.tokoharmony.feature.admin.transaction
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,12 +33,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,7 +50,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +58,22 @@ import com.harmony.tokoharmony.core.common.formatRupiah
 import com.harmony.tokoharmony.domain.model.PaymentMethod
 import com.harmony.tokoharmony.domain.model.TransactionItem
 import com.harmony.tokoharmony.domain.model.TransactionStatus
+import com.harmony.tokoharmony.ui.theme.CoralError
+import com.harmony.tokoharmony.ui.theme.CoralOnError
+import com.harmony.tokoharmony.ui.theme.EmeraldPrimary
+import com.harmony.tokoharmony.ui.theme.OutlineBorder
+import com.harmony.tokoharmony.ui.theme.OutlineVariant
+import com.harmony.tokoharmony.ui.theme.StatusErrorBg
+import com.harmony.tokoharmony.ui.theme.StatusErrorText
+import com.harmony.tokoharmony.ui.theme.StatusSuccessBg
+import com.harmony.tokoharmony.ui.theme.StatusSuccessText
+import com.harmony.tokoharmony.ui.theme.SurfaceBackground
+import com.harmony.tokoharmony.ui.theme.SurfaceLow
+import com.harmony.tokoharmony.ui.theme.SurfaceLowest
+import com.harmony.tokoharmony.ui.theme.TextOnSurface
+import com.harmony.tokoharmony.ui.theme.TextOnSurfaceVariant
+import com.harmony.tokoharmony.ui.theme.TextPrimary
+import com.harmony.tokoharmony.ui.theme.TextSecondary
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -85,14 +103,16 @@ fun AdminTransactionDetailScreen(
     }
 
     Scaffold(
+        containerColor = SurfaceBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Detail Transaksi", fontWeight = FontWeight.Bold) },
+                title = { Text("Detail Transaksi", fontWeight = FontWeight.Bold, color = TextOnSurface) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = TextOnSurface)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceLowest)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -103,14 +123,18 @@ fun AdminTransactionDetailScreen(
                 .padding(paddingValues)
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = EmeraldPrimary
+                )
             } else {
                 val tx = uiState.transaction
                 if (tx == null) {
                     Text(
                         text = "Transaksi tidak ditemukan.",
                         modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TextOnSurfaceVariant
                     )
                 } else {
                     val scrollState = rememberScrollState()
@@ -130,7 +154,10 @@ fun AdminTransactionDetailScreen(
                         // Header Card
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceLowest),
+                            border = BorderStroke(1.dp, OutlineVariant),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
                             Column(
                                 modifier = Modifier.padding(16.dp),
@@ -144,18 +171,19 @@ fun AdminTransactionDetailScreen(
                                     Text(
                                         text = tx.transactionNumber,
                                         style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextOnSurface
                                     )
 
                                     Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = if (isCompleted) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.errorContainer
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = if (isCompleted) StatusSuccessBg else StatusErrorBg
                                     ) {
                                         Text(
                                             text = if (isCompleted) "COMPLETED" else "CANCELLED",
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (isCompleted) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                            color = if (isCompleted) StatusSuccessText else StatusErrorText,
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                         )
                                     }
@@ -164,13 +192,13 @@ fun AdminTransactionDetailScreen(
                                 Text(
                                     text = "Waktu: $dateStr",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = TextOnSurfaceVariant
                                 )
 
                                 Text(
                                     text = "Kasir: ${tx.createdBy}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = TextOnSurfaceVariant
                                 )
                             }
                         }
@@ -221,7 +249,10 @@ fun AdminTransactionDetailScreen(
                         // Items Breakdown Card
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceLowest),
+                            border = BorderStroke(1.dp, OutlineVariant),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
                             Column(
                                 modifier = Modifier.padding(16.dp),
@@ -230,28 +261,29 @@ fun AdminTransactionDetailScreen(
                                 Text(
                                     "Daftar Item (${uiState.items.size})",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextOnSurface
                                 )
 
-                                Divider()
+                                Divider(color = OutlineVariant)
 
                                 uiState.items.forEach { item ->
                                     TransactionItemRow(item)
                                 }
 
-                                Divider()
+                                Divider(color = OutlineVariant)
 
                                 // Summary
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Total Transaksi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text("Total Transaksi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextOnSurface)
                                     Text(
                                         formatRupiah(tx.totalAmount),
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = EmeraldPrimary
                                     )
                                 }
 
@@ -259,10 +291,11 @@ fun AdminTransactionDetailScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Metode Pembayaran", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Metode Pembayaran", color = TextOnSurfaceVariant)
                                     Text(
                                         if (tx.paymentMethod == PaymentMethod.CASH) "Tunai" else "QRIS",
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextOnSurface
                                     )
                                 }
 
@@ -271,19 +304,19 @@ fun AdminTransactionDetailScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text("Uang Diterima", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(formatRupiah(tx.amountReceived ?: 0L))
+                                        Text("Uang Diterima", color = TextOnSurfaceVariant)
+                                        Text(formatRupiah(tx.amountReceived ?: 0L), color = TextOnSurface)
                                     }
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text("Kembalian", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+                                        Text("Kembalian", color = StatusSuccessText, fontWeight = FontWeight.Bold)
                                         Text(
                                             formatRupiah(tx.changeAmount),
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF2E7D32)
+                                            color = StatusSuccessText
                                         )
                                     }
                                 }
@@ -299,7 +332,11 @@ fun AdminTransactionDetailScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(52.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = CoralError,
+                                    contentColor = CoralOnError
+                                )
                             ) {
                                 Icon(Icons.Default.Cancel, contentDescription = null)
                                 Spacer(modifier = Modifier.size(8.dp))
@@ -320,14 +357,17 @@ fun AdminTransactionDetailScreen(
 
                 AlertDialog(
                     onDismissRequest = { showCancelDialog = false },
+                    containerColor = SurfaceLowest,
+                    shape = RoundedCornerShape(20.dp),
                     title = {
-                        Text("Batalkan Transaksi?", fontWeight = FontWeight.Bold)
+                        Text("Batalkan Transaksi?", fontWeight = FontWeight.Bold, color = TextPrimary)
                     },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text(
                                 "Pembatalan transaksi akan mengembalikan stok fisik produk (SALE_REVERSAL) dan menandai transaksi ini sebagai CANCELLED. Aksi ini tidak dapat dibatalkan.",
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary
                             )
 
                             ExposedDropdownMenuBox(
@@ -340,6 +380,13 @@ fun AdminTransactionDetailScreen(
                                     readOnly = true,
                                     label = { Text("Alasan Pembatalan") },
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedReason) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = EmeraldPrimary,
+                                        focusedLabelColor = EmeraldPrimary,
+                                        cursorColor = EmeraldPrimary,
+                                        unfocusedContainerColor = SurfaceLow,
+                                        focusedContainerColor = SurfaceLowest
+                                    ),
                                     modifier = Modifier
                                         .menuAnchor()
                                         .fillMaxWidth()
@@ -365,6 +412,13 @@ fun AdminTransactionDetailScreen(
                                 value = uiState.noteInput,
                                 onValueChange = { viewModel.onNoteChanged(it) },
                                 label = { Text("Catatan Tambahan (Opsional)") },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = EmeraldPrimary,
+                                    focusedLabelColor = EmeraldPrimary,
+                                    cursorColor = EmeraldPrimary,
+                                    unfocusedContainerColor = SurfaceLow,
+                                    focusedContainerColor = SurfaceLowest
+                                ),
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true
                             )
@@ -376,20 +430,27 @@ fun AdminTransactionDetailScreen(
                                 showCancelDialog = false
                                 viewModel.cancelTransaction()
                             },
+                            shape = RoundedCornerShape(10.dp),
                             enabled = !uiState.isCancelling,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = CoralError,
+                                contentColor = CoralOnError
+                            )
                         ) {
                             if (uiState.isCancelling) {
-                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White)
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = CoralOnError)
                             } else {
-                                Text("YA, BATALKAN")
+                                Text("YA, BATALKAN", fontWeight = FontWeight.Bold)
                             }
                         }
                     },
                     dismissButton = {
                         OutlinedButton(
                             onClick = { showCancelDialog = false },
-                            enabled = !uiState.isCancelling
+                            shape = RoundedCornerShape(10.dp),
+                            enabled = !uiState.isCancelling,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                            border = BorderStroke(1.dp, OutlineBorder)
                         ) {
                             Text("KEMBALI")
                         }
